@@ -1,5 +1,7 @@
 # YARA Live Hunt
 
+**Live site:** https://yara-live-hunt-file.vercel.app
+
 Simulate a ransomware attack with **harmless text files**, hunt it with real YARA rules, and watch your own
 Linux / WSL / Kali terminal mirrored live in the browser. Hash search finds exact copies; YARA finds the variants.
 

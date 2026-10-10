@@ -1,5 +1,7 @@
 # Security
 
+**Official address:** https://yara-live-hunt-file.vercel.app. Treat any other address as unofficial.
+
 **Design:** this site is static (HTML plus a few text files). It has no backend, no database, no cookies, no analytics, no environment variables and no API keys. The optional terminal bridge runs on the user's own machine and is read-only toward the site.
 
 **Never put secrets in this repo.** Nothing here needs any.
