@@ -30,3 +30,6 @@ Not legal advice.
 
 ## Honest limitations
 Teaching tool, not antivirus. YARA only detects; a match is a lead, not a verdict, and no match is not proof of safety. Demo rules are simple and must not be used to judge real files. The connector runs a script on your machine and has had no third-party audit: read it first. Do not type secrets in the connected shell; commands typed inside `~/yara-lab` are logged and shown on the Connect page. Hosting and Google Fonts see normal request data such as IP addresses. Provided as is, without warranty.
+
+## Cleanup
+Nothing is deleted automatically. `yh_off` disconnects. `yh_clean` stops the helper and, after you confirm, deletes `~/yara-lab`, `~/.yara-hunt` and `~/.yh-connect.sh`. `setup.sh` refuses to delete a `~/yara-lab` that this tool did not create.

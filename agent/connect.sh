@@ -13,7 +13,7 @@ YH="$HOME/.yara-hunt"; export YLAB="$HOME/yara-lab"; mkdir -p "$YH/src/rules"
 for f in setup.sh attack_sim.sh; do curl -fsSL "$__b/$f" -o "$YH/src/$f" || { echo "download failed: $f"; return 1; }; done
 curl -fsSL "$__b/rules/rules.yar" -o "$YH/src/rules/rules.yar" && curl -fsSL "$__b/agent/yara-hunt-agent.py" -o "$YH/agent.py" || { echo "download failed"; return 1; }
 for f in "$YH/src/setup.sh" "$YH/src/attack_sim.sh" "$YH/agent.py"; do head -c 2 "$f" | grep -q '^#' || { echo "Unexpected download (not a script): $f. Aborting."; return 1; }; done
-bash "$YH/src/setup.sh"
+bash "$YH/src/setup.sh" || { echo "Setup stopped. Nothing was changed."; return 1; }
 pkill -f "$YH/agent.py" 2>/dev/null
 nohup python3 "$YH/agent.py" --token "$__t" --origin "$__o" --port "$__p" >"$YH/agent.log" 2>&1 &
 disown 2>/dev/null
@@ -25,5 +25,12 @@ else
     c=$(HISTTIMEFORMAT= history 1 | sed 's/^ *[0-9]* *//'); __ylog "$c"; }
   case "$PROMPT_COMMAND" in *__ylb*) ;; *) PROMPT_COMMAND="__ylb${PROMPT_COMMAND:+;$PROMPT_COMMAND}";; esac
 fi
-yh_off() { pkill -f "$YH/agent.py"; if [ -n "$ZSH_VERSION" ]; then preexec_functions=(${preexec_functions:#__ylog}); else PROMPT_COMMAND="${PROMPT_COMMAND//__ylb;/}"; PROMPT_COMMAND="${PROMPT_COMMAND//__ylb/}"; fi; echo "YARA Live Hunt disconnected. Lab kept at ~/yara-lab (rm -rf it to remove)."; }
-echo "Connected. Open the Connect page, then: cd ~/yara-lab   (undo with: yh_off)"
+yh_off() { pkill -f "$YH/agent.py"; if [ -n "$ZSH_VERSION" ]; then preexec_functions=(${preexec_functions:#__ylog}); else PROMPT_COMMAND="${PROMPT_COMMAND//__ylb;/}"; PROMPT_COMMAND="${PROMPT_COMMAND//__ylb/}"; fi; echo "YARA Live Hunt disconnected. Lab kept at ~/yara-lab (run yh_clean to remove everything)."; }
+yh_clean() {
+  printf 'Stop the helper and delete ~/yara-lab, ~/.yara-hunt and ~/.yh-connect.sh? [y/N] '; read -r __a
+  case "$__a" in y|Y) ;; *) echo "Cancelled."; return 0;; esac
+  yh_off
+  if [ -f "$HOME/yara-lab/.yara-live-hunt" ]; then rm -rf "$HOME/yara-lab"; else echo "Skipped ~/yara-lab (not created by YARA Live Hunt)."; fi
+  rm -rf "$HOME/.yara-hunt" "$HOME/.yh-connect.sh"; echo "Removed."
+}
+echo "Connected. Open the Connect page, then: cd ~/yara-lab   (disconnect: yh_off, remove everything: yh_clean)"
