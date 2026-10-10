@@ -165,7 +165,7 @@ if(C.loaded&&add.length+del.length<=20){add.forEach(f=>{C.nw[f[0]]=C.scan?C.scan
 C.files=nf;C.ver=d.ver;C.loaded=1}}
 async function poll(){clearTimeout(TMR.c);if(S.p!='conn')return;
 try{const r=await fetch(`http://127.0.0.1:${C.port}/state?since=${C.since}&ver=${C.ver}`,{headers:{'X-YH-Token':C.tok},cache:'no-store'});
-if(r.status==401||r.status==403){C.ok=0;C.err=1}else{const d=await r.json();C.err=0;C.ok=1;C.info=d;ingest(d)}}catch(x){C.ok=0;C.err=0}
+if(r.status==401||r.status==403){C.ok=0;C.err=1}else{const d=await r.json();C.err=0;C.ok=1;C.info=d;if(C.sid&&C.sid!==d.sid){Object.assign(C,{since:0,ver:-1,ev:[],files:[],loaded:0,nw:{},gh:{},fr:{},scan:null,hash:null,stages:[]});C.sid=d.sid}else{C.sid=d.sid;ingest(d)}}}catch(x){C.ok=0;C.err=0}
 cupd();TMR.c=setTimeout(poll,C.ok?500:1500)}
 P.sec=()=>`<h1>Security</h1><p class="mu">A website that talks to your terminal deserves hard limits. These are enforced by the agent code, which you can read in <code>agent/yara-hunt-agent.py</code> (about 100 lines).</p>
 <div class="g3"><div class="card"><h5>What the bridge does</h5><ul class="ck"><li>Listens on 127.0.0.1 only, never on your network</li><li>Requires a random one-time token on every request</li><li>Accepts only the exact origin of this site</li><li>Checks the Host header against DNS rebinding</li><li>Reads <code>~/yara-lab</code> and nothing else</li><li>Runs one fixed command: <code>yara -r -s -m rules/rules.yar fileserver</code></li></ul></div>

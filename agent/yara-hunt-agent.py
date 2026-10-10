@@ -8,6 +8,7 @@ ap.add_argument('--token', required=True); ap.add_argument('--origin', required=
 ap.add_argument('--port', type=int, default=8765); ap.add_argument('--lab', default='~/yara-lab')
 A = ap.parse_args(); LAB = os.path.expanduser(A.lab); FS = LAB + '/fileserver'
 EV, N, VER, FILES, SCAN, SID = [], [0], [0], {}, [None], [0]
+BOOT = int(time.time() * 1000)  # changes every time the agent restarts
 
 def push(k, **d):
     N[0] += 1; EV.append({'n': N[0], 't': time.time(), 'k': k, **d}); del EV[:-300]
@@ -106,7 +107,7 @@ class H(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         if not self.auth(): return
         q = dict(re.findall(r'(\w+)=(-?\d+)', self.path)); since, ver = int(q.get('since', 0)), int(q.get('ver', -1))
-        o = {'ok': 1, 'ver': VER[0], 'host': socket.gethostname(), 'user': getpass.getuser(), 'os': platform.platform(terse=True),
+        o = {'ok': 1, 'sid': BOOT, 'ver': VER[0], 'host': socket.gethostname(), 'user': getpass.getuser(), 'os': platform.platform(terse=True),
              'lab': A.lab, 'yara': bool(shutil.which('yara')),
              'ev': [x for x in EV if x['n'] > since], 'scan': SCAN[0], 'hash': hashhits(),
              'stages': sorted(x['s'] for x in EV if x['k'] == 'stage')}
